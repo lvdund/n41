@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"n41/n41types"
 
 	"github.com/sirupsen/logrus"
 )
@@ -22,8 +23,8 @@ type Header struct {
 	MessageType     MessageType
 	MessageLength   uint16
 	SEID            uint64
-	// SequenceNumber  uint32
 	MessagePriority uint8
+	Adrr            n41types.Sbi
 }
 
 func (h *Header) MarshalBinary() (data []byte, err error) {

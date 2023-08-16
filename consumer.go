@@ -23,7 +23,6 @@ func (proto *N41) SendN41AssociationSetupRequest(remote Endpoint) (rsp *n41msg.N
 			MP:             0,
 			S:              n41msg.SEID_NOT_PRESENT,
 			MessageType:    n41msg.N41_ASSOCIATION_SETUP_REQUEST,
-			// SequenceNumber: proto.sequenceNumber(),
 		},
 		Body: req,
 	}
@@ -47,7 +46,6 @@ func (proto *N41) SendN41AssociationReleaseRequest(remote Endpoint) (rsp *n41msg
 			MP:             0,
 			S:              n41msg.SEID_NOT_PRESENT,
 			MessageType:    n41msg.N41_ASSOCIATION_RELEASE_REQUEST,
-			// SequenceNumber: proto.sequenceNumber(),
 		},
 		Body: req,
 	}
@@ -70,7 +68,6 @@ func (proto *N41) SendN41SessionDeletionRequest(session N41Session) (rsp *n41msg
 			S:               n41msg.SEID_PRESENT,
 			MessageType:     n41msg.N41_SESSION_DELETION_REQUEST,
 			SEID:            session.RemoteSeid(),
-			// SequenceNumber:  proto.sequenceNumber(),
 			MessagePriority: 12,
 		},
 		Body: reqbody,
@@ -102,12 +99,10 @@ func (proto *N41) SendN41HeartbeatRequest(remote Endpoint) (rsp *n41msg.Heartbea
 			MP:             0,
 			S:              n41msg.SEID_NOT_PRESENT,
 			MessageType:    n41msg.N41_HEARTBEAT_REQUEST,
-			// SequenceNumber: proto.sequenceNumber(),
 		},
 		Body: req,
 	}
 	var rspmsg *n41msg.Message
-	// if rspmsg, err = proto.sendReq(reqmsg, remote.UdpAddr()); err == nil {
 	if rspmsg, err = proto.sendReq(reqmsg, remote.Addr()); err == nil {
 		body := rspmsg.Body.(n41msg.HeartbeatResponse)
 		rsp = &body
@@ -127,7 +122,6 @@ func (proto *N41) SendN41SessionEstablishmentRequest(session N41Session) (rsp *n
 			S:               n41msg.SEID_PRESENT,
 			MessageType:     n41msg.N41_SESSION_ESTABLISHMENT_REQUEST,
 			SEID:            0, /*session.RemoteSeid()*/
-			// SequenceNumber:  proto.sequenceNumber(),
 			MessagePriority: 0,
 		},
 		Body: reqbody,
@@ -158,7 +152,6 @@ func (proto *N41) SendN41SessionModificationRequest(session N41Session) (rsp *n4
 			S:               n41msg.SEID_PRESENT,
 			MessageType:     n41msg.N41_SESSION_MODIFICATION_REQUEST,
 			SEID:            session.RemoteSeid(),
-			// SequenceNumber:  proto.sequenceNumber(),
 			MessagePriority: 12,
 		},
 		Body: reqbody,
@@ -167,7 +160,6 @@ func (proto *N41) SendN41SessionModificationRequest(session N41Session) (rsp *n4
 	session.FillModificationRequest(reqbody)
 
 	var rspmsg *n41msg.Message
-	// if rspmsg, err = proto.sendReq(reqmsg, session.UdpAddr()); err == nil {
 	if rspmsg, err = proto.sendReq(reqmsg, session.Addr()); err == nil {
 		if rspmsg.Header.SEID == session.LocalSeid() {
 			body := rspmsg.Body.(n41msg.N41SessionModificationResponse)

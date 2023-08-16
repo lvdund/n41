@@ -17,15 +17,13 @@ const (
 )
 
 type SendingInfo struct {
-	msg *n41msg.Message
-	// remote     *net.UDPAddr //must be non-nil
-	remote     *n41types.Sbi //must be non-nil
-	expire     int64         //expiring time
+	msg        *n41msg.Message
+	remote     *n41types.Sbi // must be non-nil
+	expire     int64         // expiring time
 	onexpiring func()
-	index      int //index that will be use to build a priority queue
+	index      int // index that will be use to build a priority queue
 }
 
-// func newSendingInfo(msg *n41msg.Message, remote *net.UDPAddr, dur int64, onexpiring func()) (info SendingInfo) {
 func newSendingInfo(msg *n41msg.Message, remote *n41types.Sbi, dur int64, onexpiring func()) (info SendingInfo) {
 	info.msg = msg
 	info.remote = remote
@@ -41,7 +39,6 @@ func (info *SendingInfo) DeadTime() int64 {
 func (info *SendingInfo) Id() ItemId {
 	return ItemId{
 		remote: info.remote.String(),
-		seq:    info.msg.Header.SequenceNumber,
 	}
 }
 
@@ -64,7 +61,6 @@ type ReqSendingInfo struct {
 	done  chan bool       //close when receiving a response (or timer expiring)
 }
 
-// func newReqSendingInfo(msg *n41msg.Message, remote *net.UDPAddr, scheduler func(*ReqSendingInfo)) (info *ReqSendingInfo) {
 func newReqSendingInfo(msg *n41msg.Message, remote *n41types.Sbi, scheduler func(*ReqSendingInfo)) (info *ReqSendingInfo) {
 	info = &ReqSendingInfo{
 		done:  make(chan bool),
@@ -75,10 +71,7 @@ func newReqSendingInfo(msg *n41msg.Message, remote *n41types.Sbi, scheduler func
 			//resend
 			info.expire += REQUEST_TIMEOUT
 			scheduler(info)
-			//Note: there is an neglicible possibility that a response arrives
-			//just before the request is re-schedule for sending. In such a
-			//case the response will be ignored (as its corresponding request
-			//not found. Still, the implementation is safe!
+			// Note: there is an neglicible possibility that a response arrives just before the request is re-schedule for sending. In such a case the response will be ignored (as its corresponding request not found. Still, the implementation is safe!
 		} else {
 			info.err = fmt.Errorf("Request timeout error")
 			close(info.done)
@@ -91,7 +84,6 @@ type RspSendingInfo struct {
 	SendingInfo
 }
 
-// func newRspSendingInfo(msg *n41msg.Message, remote *net.UDPAddr) *RspSendingInfo {
 func newRspSendingInfo(msg *n41msg.Message, remote *n41types.Sbi) *RspSendingInfo {
 	return &RspSendingInfo{
 		newSendingInfo(msg, remote, RESPONSE_RETENTION, nil),
@@ -101,7 +93,6 @@ func newRspSendingInfo(msg *n41msg.Message, remote *n41types.Sbi) *RspSendingInf
 // for indexing
 type ItemId struct {
 	remote string
-	// seq    uint32
 }
 
 type ExpiringItem interface {
@@ -168,12 +159,11 @@ func (l *ExpiringList) find(remote string, seq uint32) (item ExpiringItem) {
 	return
 }
 
-func (l *ExpiringList) pop(remote string, seq uint32) (item ExpiringItem) {
+func (l *ExpiringList) pop(remote string) (item ExpiringItem) {
 	l.mux.Lock()
 	defer l.mux.Unlock()
 	id := ItemId{
 		remote: remote,
-		// seq:    seq,
 	}
 	var ok bool
 	if item, ok = l.id2item[id]; ok {

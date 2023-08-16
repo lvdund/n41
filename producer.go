@@ -21,17 +21,17 @@ type Producer interface {
 	SessionProducer
 }
 
-// func (proto *N41) handleReq(remote *net.UDPAddr, msg *n41msg.Message) {
+// receivingloop --> handle
 func (proto *N41) handleReq(remote *n41types.Sbi, msg *n41msg.Message) {
 	logrus.Debugf("receive a request of type %d from %s", msg.Header.MessageType, remote)
-	if infoinf := proto.queue.find(remote.String(), msg.Header.SequenceNumber); infoinf != nil {
-		//duplicated request
-		if info, ok := infoinf.(*RspSendingInfo); ok {
-			//resend the response
-			logrus.Warnf("re-send the response to %s", info.remote.String())
-			proto.fwd.WriteTo(info.msg, remote)
-		}
-	}
+	// if infoinf := proto.queue.find(remote.String(), msg.Header.SequenceNumber); infoinf != nil {
+	// 	//duplicated request
+	// 	if info, ok := infoinf.(*RspSendingInfo); ok {
+	// 		//resend the response
+	// 		logrus.Warnf("re-send the response to %s", info.remote.String())
+	// 		proto.fwd.WriteTo(info.msg, remote)
+	// 	}
+	// }
 	//a new request
 	switch msg.Header.MessageType {
 
@@ -118,7 +118,6 @@ func (proto *N41) handleSessRepReq(remote *n41types.Sbi, msg *n41msg.Message) {
 				MP:             0,
 				S:              n41msg.SEID_PRESENT,
 				MessageType:    n41msg.N41_SESSION_REPORT_RESPONSE,
-				// SequenceNumber: msg.Header.SequenceNumber,
 				SEID:           seid,
 			},
 			Body: body,
@@ -128,7 +127,6 @@ func (proto *N41) handleSessRepReq(remote *n41types.Sbi, msg *n41msg.Message) {
 
 }
 
-// func (proto *N41) handleHeartbeatReq(remote *net.UDPAddr, msg *n41msg.Message) {
 func (proto *N41) handleHeartbeatReq(remote *n41types.Sbi, msg *n41msg.Message) {
 	req := msg.Body.(n41msg.HeartbeatRequest)
 	if body, err := proto.ahandler.HandleHeartbeatRequest(remote.String(), &req); err == nil {
@@ -142,7 +140,6 @@ func (proto *N41) handleHeartbeatReq(remote *n41types.Sbi, msg *n41msg.Message) 
 				MP:             0,
 				S:              n41msg.SEID_NOT_PRESENT,
 				MessageType:    n41msg.N41_HEARTBEAT_RESPONSE,
-				// SequenceNumber: msg.Header.SequenceNumber,
 			},
 			Body: body,
 		}

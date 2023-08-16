@@ -17,7 +17,6 @@ const (
 )
 
 type Endpoint interface {
-	// UdpAddr() *net.UDPAddr
 	Addr() *n41types.Sbi
 }
 
@@ -51,10 +50,6 @@ type N41 struct {
 
 func NewN41(ctx NodeContext) *N41 {
 	id := ctx.NodeId()
-	// addr := net.UDPAddr{
-	// 	IP:   id.ResolveNodeIdToIp(),
-	// 	Port: ctx.Port(),
-	// }
 	addr := n41types.Sbi{
 		IP:   id.ResolveNodeIdToIp(),
 		Port: ctx.Port(),
@@ -72,7 +67,8 @@ func NewN41(ctx NodeContext) *N41 {
 }
 
 func (proto *N41) Start() (err error) {
-	recv := make(chan RecvInfo, N41_MSG_RECV_QUEUE_SIZE)
+	// recv := make(chan RecvInfo, N41_MSG_RECV_QUEUE_SIZE)
+	recv := make(chan RecvInfo)
 	if err = proto.fwd.start(recv); err == nil {
 		go proto.receivingloop(recv)
 		go proto.sendingloop()
@@ -104,8 +100,7 @@ func (proto *N41) sendingloop() {
 				//terminate sending
 				close(info.done)
 			} else {
-				//cache the request for resending (in case of timeout)  and
-				//searching (in case of receiving a response)
+				//cache the request for resending (in case of timeout) and searching (in case of receiving a response)
 				proto.queue.add(info)
 			}
 		}
@@ -114,8 +109,8 @@ func (proto *N41) sendingloop() {
 
 // receiving messages from forwarder
 func (proto *N41) receivingloop(recv chan RecvInfo) {
-	proto.wg.Add(1)
-	defer proto.wg.Done()
+	// proto.wg.Add(1)
+	// defer proto.wg.Done()
 	for info := range recv {
 		proto.handle(info.remote, info.msg)
 	}
@@ -131,10 +126,9 @@ func (proto *N41) handle(remote *n41types.Sbi, msg *n41msg.Message) {
 	}
 }
 
-// func (proto *N41) handleRsp(remote *net.UDPAddr, msg *n41msg.Message) {
 func (proto *N41) handleRsp(remote *n41types.Sbi, msg *n41msg.Message) {
 	logrus.Debugf("receive a response of type %d from %s", msg.Header.MessageType, remote)
-	if infoinf := proto.queue.pop(remote.String(), msg.Header.SequenceNumber); infoinf != nil {
+	if infoinf := proto.queue.pop(remote.String()); infoinf != nil {
 		if info, ok := infoinf.(*ReqSendingInfo); ok {
 			match := false
 			switch msg.Header.MessageType {
@@ -175,7 +169,6 @@ func (proto *N41) handleRsp(remote *n41types.Sbi, msg *n41msg.Message) {
 }
 
 // send a request then wait for a response.
-// func (proto *N41) sendReq(msg *n41msg.Message, remote *net.UDPAddr) (rsp *n41msg.Message, err error) {
 func (proto *N41) sendReq(msg *n41msg.Message, remote *n41types.Sbi) (rsp *n41msg.Message, err error) {
 	info := newReqSendingInfo(msg, remote, proto.scheduleReqSending)
 	//schedule for sending
@@ -187,14 +180,8 @@ func (proto *N41) sendReq(msg *n41msg.Message, remote *n41types.Sbi) (rsp *n41ms
 	return
 }
 
-// func (proto *N41) sendRsp(msg *n41msg.Message, remote *net.UDPAddr) (err error) {
 func (proto *N41) sendRsp(msg *n41msg.Message, remote *n41types.Sbi) (err error) {
-	if err = proto.fwd.WriteTo(msg, remote); err == nil {
-		//cache the message for a certain time duration to resend in cases
-		//where duplicated requests arrive
-		proto.queue.add(newRspSendingInfo(msg, remote))
-	}
-
+	err = proto.fwd.WriteTo(msg, remote)
 	return
 }
 

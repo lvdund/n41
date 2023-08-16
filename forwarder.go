@@ -1,10 +1,13 @@
 package n41
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"n41/n41msg"
 	"n41/n41types"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -17,9 +20,8 @@ const (
 )
 
 type RecvInfo struct {
-	msg *n41msg.Message
-	// remote *net.UDPAddr
-	remote *n41types.Sbi
+	msg    *n41msg.Message
+	remote *n41types.Sbi // address of requester
 }
 
 type Forwarder struct {
@@ -41,15 +43,29 @@ func newForwarder(addr n41types.Sbi) *Forwarder {
 
 func (fwd *Forwarder) start(recv chan<- RecvInfo) (err error) {
 
-	// if fwd.conn, err = net.ListenUDP("udp", &fwd.addr); err != nil {
-	// 	logrus.Errorf("Failed to listen: %s", err.Error())
-	// 	return
-	// }
-
-	// logrus.Infof("Listen on N4 interface %s", fwd.conn.LocalAddr().String())
-
 	gin.SetMode(gin.ReleaseMode)
 	route := gin.Default()
+
+	route.GET("/", func(ctx *gin.Context) {
+		var msg *n41msg.Message
+		rawData, err := ctx.GetRawData()
+		if err != nil {
+			return
+		}
+		if err = msg.N41Unmarshal(rawData); err == nil {
+			if recv != nil {
+				recv <- RecvInfo{
+					msg:    msg,
+					remote: &msg.Header.Adrr,
+				}
+			}
+		} else {
+			logrus.Errorf(err.Error())
+		}
+		// if recv != nil {
+		// 	close(recv)
+		// }
+	})
 
 	fwd.conn = &http.Server{
 		Addr:    fwd.addr.GetAddr(),
@@ -61,40 +77,15 @@ func (fwd *Forwarder) start(recv chan<- RecvInfo) (err error) {
 			fmt.Println("Server error:", err)
 		}
 	}()
+	logrus.Infof("Listen on N4 interface %s", fwd.conn.Addr)
 
-	// go fwd.loop(recv)
 	fwd.when = time.Now()
 	return
 }
 
-func (fwd *Forwarder) loop(recv chan<- RecvInfo) {
-	fwd.wg.Add(1)
-	defer fwd.wg.Done()
-	buf := make([]byte, N41_BUF_SIZE)
-	var msg *n41msg.Message
-	for {
-		if n, addr, err := fwd.conn.ReadFromUDP(buf); err == nil {
-			msg = new(n41msg.Message)
-			if err = msg.Unmarshal(buf[:n]); err == nil {
-				if recv != nil {
-					recv <- RecvInfo{
-						msg:    msg,
-						remote: addr,
-					}
-				}
-			}
-		} else {
-			logrus.Errorf(err.Error())
-			break
-		}
-	}
-	if recv != nil {
-		close(recv)
-	}
-}
 func (fwd *Forwarder) stop() {
 	fwd.conn.Close()
-	fwd.wg.Wait()
+	// fwd.wg.Wait()
 }
 
 //time when the forwarder started running
@@ -103,11 +94,19 @@ func (fwd *Forwarder) When() time.Time {
 }
 
 // block util message is written to the transport or an error occurs
-// func (fwd *Forwarder) WriteTo(msg *n41msg.Message, addr *net.UDPAddr) (err error) {
 func (fwd *Forwarder) WriteTo(msg *n41msg.Message, addr *n41types.Sbi) (err error) {
-	var buf []byte
-	if buf, err = msg.Marshal(); err == nil {
-		_, err = fwd.conn.WriteToUDP(buf, addr)
+	sendMsg, err := json.Marshal(msg)
+	url := url.URL{
+		Scheme: "http",
+		Host:   fmt.Sprintf("%s:%d", addr.IP, addr.Port),
 	}
+	req, err := http.NewRequest(http.MethodGet, url.String(), bytes.NewBuffer(sendMsg))
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	_, err = client.Do(req)
+
 	return
 }
