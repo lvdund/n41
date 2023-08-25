@@ -179,7 +179,7 @@ func (l *ExpiringList) add(item ExpiringItem) {
 
 	l.mux.Lock()
 	defer l.mux.Unlock()
-	//	logrus.Info("add item to list")
+	// logrus.Info("add item to list")
 	l.id2item[item.Id()] = item
 	heap.Push(&l.pq, item)
 }

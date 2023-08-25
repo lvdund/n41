@@ -8,7 +8,6 @@ import (
 	"n41/n41types"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -30,7 +29,7 @@ type Forwarder struct {
 	conn *http.Server
 	addr n41types.Sbi
 	when time.Time //started time
-	wg   sync.WaitGroup
+	// wg   sync.WaitGroup
 }
 
 // func newForwarder(addr net.UDPAddr) *Forwarder {
@@ -71,12 +70,14 @@ func (fwd *Forwarder) start(recv chan<- RecvInfo) (err error) {
 		Addr:    fwd.addr.GetAddr(),
 		Handler: route,
 	}
-	go func() {
-		err := fwd.conn.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
-			fmt.Println("Server error:", err)
-		}
-	}()
+	// go func() {
+	// 	err := fwd.conn.ListenAndServe()
+	// 	if err != nil && err != http.ErrServerClosed {
+	// 		fmt.Println("Server error:", err)
+	// 	}
+	// }()
+	route.Run(fwd.addr.GetAddr())
+
 	logrus.Infof("Listen on N4 interface %s", fwd.conn.Addr)
 
 	fwd.when = time.Now()

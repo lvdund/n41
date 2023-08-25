@@ -108,7 +108,6 @@ func (proto *N41) handleAssRelReq(remote *n41types.Sbi, msg *n41msg.Message) {
 	}
 }
 
-// func (proto *N41) handleSessRepReq(remote *net.UDPAddr, msg *n41msg.Message) {
 func (proto *N41) handleSessRepReq(remote *n41types.Sbi, msg *n41msg.Message) {
 	req := msg.Body.(n41msg.N41SessionReportRequest)
 	if body, seid, err := proto.shandler.HandleSessionReportRequest(remote.String(), msg.Header.SEID, &req); err == nil {

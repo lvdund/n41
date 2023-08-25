@@ -5,7 +5,6 @@ import (
 	"n41/n41msg"
 	"n41/n41types"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -37,9 +36,9 @@ type NodeContext interface {
 }
 
 type N41 struct {
-	ctx      NodeContext
-	fwd      *Forwarder
-	seq      uint32 //for generating request sequence number
+	ctx NodeContext
+	fwd *Forwarder
+	// seq      uint32 //for generating request sequence number
 	wg       sync.WaitGroup
 	shandler SessionProducer     //upper handler to response messages
 	ahandler AssociationProducer //upper handler to response messages
@@ -114,7 +113,6 @@ func (proto *N41) receivingloop(recv chan RecvInfo) {
 	for info := range recv {
 		proto.handle(info.remote, info.msg)
 	}
-
 }
 
 // func (proto *N41) handle(remote *net.UDPAddr, msg *n41msg.Message) {
@@ -194,6 +192,6 @@ func (proto *N41) scheduleReqSending(info *ReqSendingInfo) {
 }
 
 // generate sequence number for N41 sending request
-func (proto *N41) sequenceNumber() uint32 {
-	return atomic.AddUint32(&proto.seq, 1)
-}
+// func (proto *N41) sequenceNumber() uint32 {
+// 	return atomic.AddUint32(&proto.seq, 1)
+// }
