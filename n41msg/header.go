@@ -24,7 +24,7 @@ type Header struct {
 	MessageLength   uint16
 	SEID            uint64
 	MessagePriority uint8
-	Adrr            n41types.Sbi
+	Adrr            n41types.SbiAdrr
 }
 
 func (h *Header) MarshalBinary() (data []byte, err error) {

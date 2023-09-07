@@ -22,7 +22,7 @@ type Producer interface {
 }
 
 // receivingloop --> handle
-func (proto *N41) handleReq(remote *n41types.Sbi, msg *n41msg.Message) {
+func (proto *N41) handleReq(remote *n41types.SbiAdrr, msg *n41msg.Message) {
 	logrus.Debugf("receive a request of type %d from %s", msg.Header.MessageType, remote)
 	// if infoinf := proto.queue.find(remote.String(), msg.Header.SequenceNumber); infoinf != nil {
 	// 	//duplicated request
@@ -67,7 +67,7 @@ func (proto *N41) handleReq(remote *n41types.Sbi, msg *n41msg.Message) {
 }
 
 // func (proto *N41) handleAssSetReq(remote *net.UDPAddr, msg *n41msg.Message) {
-func (proto *N41) handleAssSetReq(remote *n41types.Sbi, msg *n41msg.Message) {
+func (proto *N41) handleAssSetReq(remote *n41types.SbiAdrr, msg *n41msg.Message) {
 	req := msg.Body.(n41msg.N41AssociationSetupRequest)
 	if body, err := proto.ahandler.HandleAssociationSetupRequest(remote.String(), &req); err == nil {
 		body.RecoveryTimeStamp = &n41types.RecoveryTimeStamp{
@@ -77,10 +77,10 @@ func (proto *N41) handleAssSetReq(remote *n41types.Sbi, msg *n41msg.Message) {
 
 		rsp := &n41msg.Message{
 			Header: n41msg.Header{
-				Version:        n41msg.N41Version,
-				MP:             0,
-				S:              n41msg.SEID_NOT_PRESENT,
-				MessageType:    n41msg.N41_ASSOCIATION_SETUP_RESPONSE,
+				Version:     n41msg.N41Version,
+				MP:          0,
+				S:           n41msg.SEID_NOT_PRESENT,
+				MessageType: n41msg.N41_ASSOCIATION_SETUP_RESPONSE,
 				// SequenceNumber: msg.Header.SequenceNumber,
 			},
 			Body: body,
@@ -90,16 +90,16 @@ func (proto *N41) handleAssSetReq(remote *n41types.Sbi, msg *n41msg.Message) {
 }
 
 // func (proto *N41) handleAssRelReq(remote *net.UDPAddr, msg *n41msg.Message) {
-func (proto *N41) handleAssRelReq(remote *n41types.Sbi, msg *n41msg.Message) {
+func (proto *N41) handleAssRelReq(remote *n41types.SbiAdrr, msg *n41msg.Message) {
 	req := msg.Body.(n41msg.N41AssociationReleaseRequest)
 	if body, err := proto.ahandler.HandleAssociationReleaseRequest(remote.String(), &req); err == nil {
 		body.NodeID = proto.ctx.NodeId()
 		rsp := &n41msg.Message{
 			Header: n41msg.Header{
-				Version:        n41msg.N41Version,
-				MP:             0,
-				S:              n41msg.SEID_NOT_PRESENT,
-				MessageType:    n41msg.N41_ASSOCIATION_RELEASE_RESPONSE,
+				Version:     n41msg.N41Version,
+				MP:          0,
+				S:           n41msg.SEID_NOT_PRESENT,
+				MessageType: n41msg.N41_ASSOCIATION_RELEASE_RESPONSE,
 				// SequenceNumber: msg.Header.SequenceNumber,
 			},
 			Body: body,
@@ -108,16 +108,16 @@ func (proto *N41) handleAssRelReq(remote *n41types.Sbi, msg *n41msg.Message) {
 	}
 }
 
-func (proto *N41) handleSessRepReq(remote *n41types.Sbi, msg *n41msg.Message) {
+func (proto *N41) handleSessRepReq(remote *n41types.SbiAdrr, msg *n41msg.Message) {
 	req := msg.Body.(n41msg.N41SessionReportRequest)
 	if body, seid, err := proto.shandler.HandleSessionReportRequest(remote.String(), msg.Header.SEID, &req); err == nil {
 		rsp := &n41msg.Message{
 			Header: n41msg.Header{
-				Version:        n41msg.N41Version,
-				MP:             0,
-				S:              n41msg.SEID_PRESENT,
-				MessageType:    n41msg.N41_SESSION_REPORT_RESPONSE,
-				SEID:           seid,
+				Version:     n41msg.N41Version,
+				MP:          0,
+				S:           n41msg.SEID_PRESENT,
+				MessageType: n41msg.N41_SESSION_REPORT_RESPONSE,
+				SEID:        seid,
 			},
 			Body: body,
 		}
@@ -126,7 +126,7 @@ func (proto *N41) handleSessRepReq(remote *n41types.Sbi, msg *n41msg.Message) {
 
 }
 
-func (proto *N41) handleHeartbeatReq(remote *n41types.Sbi, msg *n41msg.Message) {
+func (proto *N41) handleHeartbeatReq(remote *n41types.SbiAdrr, msg *n41msg.Message) {
 	req := msg.Body.(n41msg.HeartbeatRequest)
 	if body, err := proto.ahandler.HandleHeartbeatRequest(remote.String(), &req); err == nil {
 		body.RecoveryTimeStamp = &n41types.RecoveryTimeStamp{
@@ -135,10 +135,10 @@ func (proto *N41) handleHeartbeatReq(remote *n41types.Sbi, msg *n41msg.Message) 
 
 		rsp := &n41msg.Message{
 			Header: n41msg.Header{
-				Version:        n41msg.N41Version,
-				MP:             0,
-				S:              n41msg.SEID_NOT_PRESENT,
-				MessageType:    n41msg.N41_HEARTBEAT_RESPONSE,
+				Version:     n41msg.N41Version,
+				MP:          0,
+				S:           n41msg.SEID_NOT_PRESENT,
+				MessageType: n41msg.N41_HEARTBEAT_RESPONSE,
 			},
 			Body: body,
 		}

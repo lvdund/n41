@@ -16,7 +16,7 @@ const (
 )
 
 type Endpoint interface {
-	Addr() *n41types.Sbi
+	Addr() *n41types.SbiAdrr
 }
 
 type N41Session interface {
@@ -49,7 +49,7 @@ type N41 struct {
 
 func NewN41(ctx NodeContext) *N41 {
 	id := ctx.NodeId()
-	addr := n41types.Sbi{
+	addr := n41types.SbiAdrr{
 		IP:   id.ResolveNodeIdToIp(),
 		Port: ctx.Port(),
 	}
@@ -116,7 +116,7 @@ func (proto *N41) receivingloop(recv chan RecvInfo) {
 }
 
 // func (proto *N41) handle(remote *net.UDPAddr, msg *n41msg.Message) {
-func (proto *N41) handle(remote *n41types.Sbi, msg *n41msg.Message) {
+func (proto *N41) handle(remote *n41types.SbiAdrr, msg *n41msg.Message) {
 	if msg.IsRequest() {
 		proto.handleReq(remote, msg)
 	} else {
@@ -124,7 +124,7 @@ func (proto *N41) handle(remote *n41types.Sbi, msg *n41msg.Message) {
 	}
 }
 
-func (proto *N41) handleRsp(remote *n41types.Sbi, msg *n41msg.Message) {
+func (proto *N41) handleRsp(remote *n41types.SbiAdrr, msg *n41msg.Message) {
 	logrus.Debugf("receive a response of type %d from %s", msg.Header.MessageType, remote)
 	if infoinf := proto.queue.pop(remote.String()); infoinf != nil {
 		if info, ok := infoinf.(*ReqSendingInfo); ok {
@@ -167,7 +167,7 @@ func (proto *N41) handleRsp(remote *n41types.Sbi, msg *n41msg.Message) {
 }
 
 // send a request then wait for a response.
-func (proto *N41) sendReq(msg *n41msg.Message, remote *n41types.Sbi) (rsp *n41msg.Message, err error) {
+func (proto *N41) sendReq(msg *n41msg.Message, remote *n41types.SbiAdrr) (rsp *n41msg.Message, err error) {
 	info := newReqSendingInfo(msg, remote, proto.scheduleReqSending)
 	//schedule for sending
 	proto.scheduleReqSending(info)
@@ -178,7 +178,7 @@ func (proto *N41) sendReq(msg *n41msg.Message, remote *n41types.Sbi) (rsp *n41ms
 	return
 }
 
-func (proto *N41) sendRsp(msg *n41msg.Message, remote *n41types.Sbi) (err error) {
+func (proto *N41) sendRsp(msg *n41msg.Message, remote *n41types.SbiAdrr) (err error) {
 	err = proto.fwd.WriteTo(msg, remote)
 	return
 }

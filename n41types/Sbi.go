@@ -7,17 +7,17 @@ import (
 	"net"
 )
 
-type Sbi struct {
+type SbiAdrr struct {
 	IP   net.IP `json:"ip"`
 	Port int    `json:"port"`
 	Zone string `json:"zone,omitempty"`
 }
 
-func (s Sbi) GetAddr() string {
+func (s SbiAdrr) GetAddr() string {
 	return fmt.Sprintf("%s:%d", s.IP, s.Port)
 }
 
-func (a *Sbi) String() string {
+func (a *SbiAdrr) String() string {
 	if a == nil {
 		return "<nil>"
 	}

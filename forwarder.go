@@ -20,20 +20,19 @@ const (
 
 type RecvInfo struct {
 	msg    *n41msg.Message
-	remote *n41types.Sbi // address of requester
+	remote *n41types.SbiAdrr // address of requester
 }
 
 type Forwarder struct {
 	// conn *net.UDPConn
 	// addr net.UDPAddr
 	conn *http.Server
-	addr n41types.Sbi
+	addr n41types.SbiAdrr
 	when time.Time //started time
 	// wg   sync.WaitGroup
 }
 
-// func newForwarder(addr net.UDPAddr) *Forwarder {
-func newForwarder(addr n41types.Sbi) *Forwarder {
+func newForwarder(addr n41types.SbiAdrr) *Forwarder {
 	ret := &Forwarder{
 		addr: addr,
 	}
@@ -95,7 +94,7 @@ func (fwd *Forwarder) When() time.Time {
 }
 
 // block util message is written to the transport or an error occurs
-func (fwd *Forwarder) WriteTo(msg *n41msg.Message, addr *n41types.Sbi) (err error) {
+func (fwd *Forwarder) WriteTo(msg *n41msg.Message, addr *n41types.SbiAdrr) (err error) {
 	sendMsg, err := json.Marshal(msg)
 	url := url.URL{
 		Scheme: "http",

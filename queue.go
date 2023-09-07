@@ -18,13 +18,13 @@ const (
 
 type SendingInfo struct {
 	msg        *n41msg.Message
-	remote     *n41types.Sbi // must be non-nil
-	expire     int64         // expiring time
+	remote     *n41types.SbiAdrr // must be non-nil
+	expire     int64             // expiring time
 	onexpiring func()
 	index      int // index that will be use to build a priority queue
 }
 
-func newSendingInfo(msg *n41msg.Message, remote *n41types.Sbi, dur int64, onexpiring func()) (info SendingInfo) {
+func newSendingInfo(msg *n41msg.Message, remote *n41types.SbiAdrr, dur int64, onexpiring func()) (info SendingInfo) {
 	info.msg = msg
 	info.remote = remote
 	info.expire = time.Now().UnixNano() + dur
@@ -61,7 +61,7 @@ type ReqSendingInfo struct {
 	done  chan bool       //close when receiving a response (or timer expiring)
 }
 
-func newReqSendingInfo(msg *n41msg.Message, remote *n41types.Sbi, scheduler func(*ReqSendingInfo)) (info *ReqSendingInfo) {
+func newReqSendingInfo(msg *n41msg.Message, remote *n41types.SbiAdrr, scheduler func(*ReqSendingInfo)) (info *ReqSendingInfo) {
 	info = &ReqSendingInfo{
 		done:  make(chan bool),
 		retry: 0,
@@ -84,7 +84,7 @@ type RspSendingInfo struct {
 	SendingInfo
 }
 
-func newRspSendingInfo(msg *n41msg.Message, remote *n41types.Sbi) *RspSendingInfo {
+func newRspSendingInfo(msg *n41msg.Message, remote *n41types.SbiAdrr) *RspSendingInfo {
 	return &RspSendingInfo{
 		newSendingInfo(msg, remote, RESPONSE_RETENTION, nil),
 	}
