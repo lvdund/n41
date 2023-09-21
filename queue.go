@@ -145,7 +145,7 @@ func newExpiringList() (l ExpiringList) {
 		id2item: make(map[ItemId]ExpiringItem),
 	}
 	//heap.Init(&l.pq)
-	return l
+	return
 }
 
 func (l *ExpiringList) find(remote string, seq uint32) (item ExpiringItem) {

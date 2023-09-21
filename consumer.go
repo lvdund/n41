@@ -1,11 +1,15 @@
 package n41
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"n41/n41msg"
 	"n41/n41types"
+	"net/http"
 )
 
+/*
 func (proto *N41) SendN41AssociationSetupRequest(remote Endpoint) (rsp *n41msg.N41AssociationSetupResponse, err error) {
 	req := &n41msg.N41AssociationSetupRequest{
 		NodeID: proto.ctx.NodeId(),
@@ -34,6 +38,69 @@ func (proto *N41) SendN41AssociationSetupRequest(remote Endpoint) (rsp *n41msg.N
 	}
 	return
 }
+*/
+
+func (proto *N41) SendN41AssociationSetupRequest(remote Endpoint) (rsp *n41msg.N41AssociationSetupResponse, err error) {
+	req := &n41msg.N41AssociationSetupRequest{
+		NodeID: proto.ctx.NodeId(),
+		RecoveryTimeStamp: &n41types.RecoveryTimeStamp{
+			RecoveryTimeStamp: proto.fwd.When(),
+		},
+		CPFunctionFeatures: &n41types.CPFunctionFeatures{
+			SupportedFeatures: 0,
+		},
+	}
+
+	reqmsg := &n41msg.Message{
+		Header: n41msg.Header{
+			Version:     n41msg.N41Version,
+			MP:          0,
+			S:           n41msg.SEID_NOT_PRESENT,
+			MessageType: n41msg.N41_ASSOCIATION_SETUP_REQUEST,
+		},
+		Body: req,
+	}
+
+	reqData, err := reqmsg.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	// Gửi yêu cầu bằng HTTP POST request
+	respData, err := proto.sendHTTPRequest(remote.Addr().String(), "POST", reqData)
+	if err != nil {
+		return nil, err
+	}
+
+	// Giải mã phản hồi từ dạng bytes thành cấu trúc N41AssociationSetupResponse
+	rspmsg := &n41msg.Message{}
+	if err := rspmsg.N41Unmarshal(respData); err != nil {
+		return nil, err
+	}
+
+	body, ok := rspmsg.Body.(n41msg.N41AssociationSetupResponse)
+	if !ok {
+		return nil, fmt.Errorf("Invalid response body type")
+	}
+
+	return &body, nil
+}
+
+func (proto *N41) sendHTTPRequest(remoteAddr string, method string, data []byte) ([]byte, error) {
+	url := "http://" + remoteAddr // URL của đích cần gửi yêu cầu HTTP
+	resp, err := http.Post(url, "application/octet-stream", bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return respData, nil
+}
 
 func (proto *N41) SendN41AssociationReleaseRequest(remote Endpoint) (rsp *n41msg.N41AssociationReleaseResponse, err error) {
 	req := &n41msg.N41AssociationReleaseRequest{
@@ -42,10 +109,10 @@ func (proto *N41) SendN41AssociationReleaseRequest(remote Endpoint) (rsp *n41msg
 
 	reqmsg := &n41msg.Message{
 		Header: n41msg.Header{
-			Version:        n41msg.N41Version,
-			MP:             0,
-			S:              n41msg.SEID_NOT_PRESENT,
-			MessageType:    n41msg.N41_ASSOCIATION_RELEASE_REQUEST,
+			Version:     n41msg.N41Version,
+			MP:          0,
+			S:           n41msg.SEID_NOT_PRESENT,
+			MessageType: n41msg.N41_ASSOCIATION_RELEASE_REQUEST,
 		},
 		Body: req,
 	}
@@ -95,10 +162,10 @@ func (proto *N41) SendN41HeartbeatRequest(remote Endpoint) (rsp *n41msg.Heartbea
 
 	reqmsg := &n41msg.Message{
 		Header: n41msg.Header{
-			Version:        n41msg.N41Version,
-			MP:             0,
-			S:              n41msg.SEID_NOT_PRESENT,
-			MessageType:    n41msg.N41_HEARTBEAT_REQUEST,
+			Version:     n41msg.N41Version,
+			MP:          0,
+			S:           n41msg.SEID_NOT_PRESENT,
+			MessageType: n41msg.N41_HEARTBEAT_REQUEST,
 		},
 		Body: req,
 	}
